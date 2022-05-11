@@ -1,5 +1,6 @@
 import csvtojson from 'csvtojson';
 import { createReadStream, createWriteStream } from 'fs';
+import { pipeline } from 'node:stream';
 
 const readStream = createReadStream('./csv/nodejs-hw1-ex1.csv');
 const writeStream = createWriteStream('./dataFromStream.txt');
@@ -10,7 +11,15 @@ const handleStreamError = () => {
   writeStream.end('Finished with error');
 };
 
-readStream.pipe(csvtojson())
-  .on('error', handleStreamError)
-  .pipe(writeStream)
-  .on('error', handleStreamError);
+pipeline(
+  readStream,
+  csvtojson({ delimiter: ',' }),
+  writeStream,
+  (err) => {
+    if (err) {
+      handleStreamError();
+    } else {
+      console.log('Pipeline succeeded.');
+    }
+  }
+);
