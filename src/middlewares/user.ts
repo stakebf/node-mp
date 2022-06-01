@@ -1,11 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { Schema } from 'joi';
-import getUserSchema from '@shared/schemes/user';
 
 export const userValidationMiddleware =
-  (method: string) => (req: Request, res: Response, next: NextFunction) => {
+  (userSchema: Schema) => (req: Request, res: Response, next: NextFunction) => {
     const { body } = req;
-    const { error } = (getUserSchema(method) as Schema).validate(body, { abortEarly: false });
+    const { error } = (userSchema).validate(body, { abortEarly: false });
 
     if (error?.isJoi) {
       return res.status(400).json({

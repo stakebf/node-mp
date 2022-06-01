@@ -3,11 +3,11 @@ import UserModel from '../user';
 import { IUser } from '@shared/types/user';
 
 const getMockedUserConfig = (config: Partial<IUser>) => ({
-    login: 'user',
-    password: '1234',
-    age: 25,
-    ...config
-}); 
+  login: 'user',
+  password: '1234',
+  age: 25,
+  ...config
+});
 
 describe('UserModel', () => {
   test('should correctly create users', () => {
@@ -37,12 +37,12 @@ describe('UserModel', () => {
 
   test('should correctly do soft delete user', () => {
     const userList = new UserModel();
-    const mockedUser1: Omit<IUser, 'id' | 'isDeleted'> = getMockedUserConfig({ login: 'user1'});
-    const mockedUser2: Omit<IUser, 'id' | 'isDeleted'> = getMockedUserConfig({ login: 'user2'});
+    const mockedUser1: Omit<IUser, 'id' | 'isDeleted'> = getMockedUserConfig({ login: 'user1' });
+    const mockedUser2: Omit<IUser, 'id' | 'isDeleted'> = getMockedUserConfig({ login: 'user2' });
 
     userList.createUser(mockedUser1);
     const userToDelete = userList.createUser(mockedUser2);
-    
+
     expect(userList.getAvailableUserList()).toHaveLength(2);
 
     userList.softDeleteUser(userToDelete!.id);
@@ -53,14 +53,14 @@ describe('UserModel', () => {
 
   test('should return only available user list isDeleted=false', () => {
     const userList = new UserModel();
-    const mockedUser1: Omit<IUser, 'id' | 'isDeleted'> = getMockedUserConfig({ login: 'user1'});
-    const mockedUser2: Omit<IUser, 'id' | 'isDeleted'> = getMockedUserConfig({ login: 'user2'});
-    const mockedUser3: Omit<IUser, 'id' | 'isDeleted'> = getMockedUserConfig({ login: 'user3'});
+    const mockedUser1: Omit<IUser, 'id' | 'isDeleted'> = getMockedUserConfig({ login: 'user1' });
+    const mockedUser2: Omit<IUser, 'id' | 'isDeleted'> = getMockedUserConfig({ login: 'user2' });
+    const mockedUser3: Omit<IUser, 'id' | 'isDeleted'> = getMockedUserConfig({ login: 'user3' });
 
     userList.createUser(mockedUser1);
     userList.createUser(mockedUser2);
     const userToDelete = userList.createUser(mockedUser3);
-    
+
     userList.softDeleteUser(userToDelete!.id);
 
     expect(userList.getAvailableUserList()).toHaveLength(2);
@@ -68,7 +68,7 @@ describe('UserModel', () => {
 
   test('should correctly update user', () => {
     const userList = new UserModel();
-    const mockedUser1: Omit<IUser, 'id' | 'isDeleted'> = getMockedUserConfig({ login: 'user1'});
+    const mockedUser1: Omit<IUser, 'id' | 'isDeleted'> = getMockedUserConfig({ login: 'user1' });
 
     const createdUser = userList.createUser(mockedUser1);
     const updatedUser = userList.updateUser(createdUser!.id, { login: 'updatedUser', age: 55 });
@@ -80,11 +80,11 @@ describe('UserModel', () => {
 
   test('should correctly return sorted auto suggest user list', () => {
     const userList = new UserModel();
-    userList.createUser(getMockedUserConfig({ login: 'tazik'}));
-    userList.createUser(getMockedUserConfig({ login: 'user3'}));
-    userList.createUser(getMockedUserConfig({ login: 'talik'}));
-    userList.createUser(getMockedUserConfig({ login: 'tabalik'}));
-    userList.createUser(getMockedUserConfig({ login: 'ali'}));
+    userList.createUser(getMockedUserConfig({ login: 'tazik' }));
+    userList.createUser(getMockedUserConfig({ login: 'user3' }));
+    userList.createUser(getMockedUserConfig({ login: 'talik' }));
+    userList.createUser(getMockedUserConfig({ login: 'tabalik' }));
+    userList.createUser(getMockedUserConfig({ login: 'ali' }));
 
     const autoSuggestUsersWithoutLimit = userList.getAutoSuggestUsers('ali');
 

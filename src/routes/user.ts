@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import UserController from '@controllers/user';
 import { userValidationMiddleware } from '@middlewares/user';
+import { userSchemaPost, userSchemaPut } from '@shared/schemes/user';
 
 const userRouter = Router();
 const {
@@ -15,12 +16,12 @@ const {
 userRouter
   .route('/')
   .get(getAvailableUserList)
-  .post(userValidationMiddleware('POST'), createUser);
+  .post(userValidationMiddleware(userSchemaPost), createUser);
 
 userRouter
   .route('/:id')
   .get(getUserByID)
-  .put(userValidationMiddleware('PUT'), updateUser)
+  .put(userValidationMiddleware(userSchemaPut), updateUser)
   .delete(deleteUser);
 
 userRouter
