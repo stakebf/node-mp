@@ -78,7 +78,7 @@ class UserController {
     const deletedUser = this.userModel.softDeleteUser(id);
 
     if (!deletedUser) {
-      return res.status(400).json({
+      return res.status(404).json({
         message: `User with ${id} doesn't exist or has been already removed`
       });
     }
