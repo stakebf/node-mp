@@ -83,7 +83,7 @@ class UserController {
       });
     }
 
-    return res.json(deletedUser);
+    return res.json({ status: true });
   };
 
   getAutoSuggestUsers = (req: Request, res: Response, next: NextFunction) => {

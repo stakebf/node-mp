@@ -19,13 +19,13 @@ userRouter
   .post(userValidationMiddleware(userSchemaPost), createUser);
 
 userRouter
+  .route('/getAutoSuggestUsers')
+  .get(getAutoSuggestUsers);
+
+userRouter
   .route('/:id')
   .get(getUserByID)
   .put(userValidationMiddleware(userSchemaPut), updateUser)
   .delete(deleteUser);
-
-userRouter
-  .route('/getAutoSuggestUsers')
-  .get(getAutoSuggestUsers);
 
 export default userRouter;
