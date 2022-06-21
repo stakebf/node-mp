@@ -1,31 +1,31 @@
 import { Router } from 'express';
 import UserController from '@controllers/user';
 import { userValidationMiddleware } from '@middlewares/user';
-import { userSchemaPost, userSchemaPut } from '@shared/schemes/user';
+import { userSchemaPost, userSchemaPut, userSchemaCheckLogin } from '@shared/schemes/user';
 
 const userRouter = Router();
 const {
   createUser,
   getUserByID,
-  deleteUser,
-  getAvailableUserList,
+  checkLogin,
+  softDeleteUser,
   updateUser,
-  getAutoSuggestUsers
+  getUsersByParams
 } = new UserController();
 
 userRouter
   .route('/')
-  .get(getAvailableUserList)
+  .get(getUsersByParams)
   .post(userValidationMiddleware(userSchemaPost), createUser);
 
 userRouter
-  .route('/getAutoSuggestUsers')
-  .get(getAutoSuggestUsers);
+  .route('/login')
+  .post(userValidationMiddleware(userSchemaCheckLogin), checkLogin);
 
 userRouter
   .route('/:id')
   .get(getUserByID)
   .put(userValidationMiddleware(userSchemaPut), updateUser)
-  .delete(deleteUser);
+  .delete(softDeleteUser);
 
 export default userRouter;

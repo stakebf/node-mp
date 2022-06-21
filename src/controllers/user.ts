@@ -1,24 +1,51 @@
 import { Request, Response, NextFunction } from 'express';
-import UserModel from '@models/user';
-import { IUserModel } from '@src/shared/types/user';
+import UserRepository from '@src/repositories/user';
+import UserEntity from '@src/entities/User';
+import { PostgresDataSource } from '@src/data-source';
+import User from '@entities/User';
+
+const DEFAULT_LIMIT = 10;
+const DEFAULT_OFFSET = 0;
 
 class UserController {
-  userModel: IUserModel;
+  private readonly repository: UserRepository;
 
   constructor() {
-    this.userModel = new UserModel();
+    this.repository = new UserRepository(PostgresDataSource.getRepository(User));
   }
 
-  getAvailableUserList = (req: Request, res: Response, next: NextFunction) => {
-    const allUsers = this.userModel.getAvailableUserList();
+  private getPaginatedResponse({
+    data,
+    count,
+    limit,
+    offset
+  }: {
+    data: UserEntity[],
+    count: number,
+    limit: number,
+    offset: number
+  }) {
+    const currentPage = offset + 1;
+    const lastPage = Math.ceil(count / limit);
+    const nextPage = currentPage + 1 > lastPage ? null : currentPage + 1;
+    const prevPage = currentPage - 1 < 1 ? null : currentPage - 1;
 
-    return res.json(allUsers);
-  };
+    return {
+      statusCode: 'success',
+      data,
+      count,
+      currentPage,
+      nextPage,
+      prevPage,
+      lastPage
+    };
+  }
 
-  createUser = (req: Request, res: Response, next: NextFunction) => {
+  createUser = async (req: Request, res: Response, next: NextFunction) => {
     const { body } = req;
     const { login: createdUserLogin } = body;
-    const createdUser = this.userModel.createUser(body);
+
+    const createdUser = await this.repository.createUser(body);
 
     if (!createdUser) {
       return res.status(400).json({
@@ -29,18 +56,9 @@ class UserController {
     return res.json(createdUser);
   };
 
-  getUserByID = (req: Request, res: Response, next: NextFunction) => {
-    const { params: { id }, query: { loginSubstring, limit } } = req;
-
-    if (loginSubstring || limit) return next();
-
-    if (!id) {
-      return res.status(400).json({
-        message: 'ID required'
-      });
-    }
-
-    const user = this.userModel.getUserByID(id);
+  getUserByID = async (req: Request, res: Response, next: NextFunction) => {
+    const { params: { id } } = req;
+    const user = await this.repository.getUserByID(id);
 
     if (!user) {
       return res.status(400).json({
@@ -51,22 +69,97 @@ class UserController {
     return res.json(user);
   };
 
-  updateUser = (req: Request, res: Response, next: NextFunction) => {
+  getUsersByParams = async (req: Request, res: Response, next: NextFunction) => {
+    const { query: {
+      loginSubstring = '',
+      offset,
+      limit,
+      order = 'ASC'
+    } }: {
+      query: {
+        loginSubstring?: string,
+        offset?: string,
+        limit?: string,
+        order?: string
+      }
+    } = req;
+    const limitValue  = Number(limit) ? Number(limit) : DEFAULT_LIMIT;
+    const offsetValue  = Number(offset) ? Number(offset) : DEFAULT_OFFSET;
+
+    const { data, count } = await this.repository.getUsersByParams({
+      loginSubstring,
+      limit: limitValue,
+      offset: offsetValue,
+      order
+    });
+
+    return res.json(this.getPaginatedResponse({
+      data,
+      count,
+      limit: limitValue,
+      offset: offsetValue
+    }));
+  };
+
+  checkLogin = async (req: Request, res: Response, next: NextFunction) => {
+    const { body: {
+      login, password
+    } } = req;
+    const isCorrectUserCreds = await this.repository.checkLogin({ login, password });
+
+    if (isCorrectUserCreds === undefined) {
+      return res.status(400).json({
+        message: `User with ${login} doesn't exist`
+      });
+    }
+
+    if (!isCorrectUserCreds) {
+      return res.status(401).json({
+        message: 'Incorrect login or password'
+      });
+    }
+
+    return res.json({
+      status: 'ok'
+    });
+  };
+
+  updateUser = async (req: Request, res: Response, next: NextFunction) => {
     const { body } = req;
     const { params: { id } } = req;
 
-    const updatedUser = this.userModel.updateUser(id, body);
+    if ((!body?.password && body?.oldPassword) || (body?.password && !body?.oldPassword)) {
+      return res.status(400).json({
+        message: 'Missing parameters for updating password'
+      });
+    } else if (body?.password && body?.oldPassword) {
+      const isCorrectUserCreds = await this.repository.checkLogin({ id, password: body.oldPassword });
+
+      if (isCorrectUserCreds === undefined) {
+        return res.status(400).json({
+          message: `User with ${id} doesn't exist`
+        });
+      }
+
+      if (!isCorrectUserCreds) {
+        return res.status(401).json({
+          message: 'Incorrect password'
+        });
+      }
+    }
+
+    const updatedUser = await this.repository.updateUser(id, body);
 
     if (!updatedUser) {
       return res.status(400).json({
-        message: `Can\'t find user with ${id} id`
+        message: `User with ${id} doesn't exist or has been already removed`
       });
     }
 
     return res.json(updatedUser);
   };
 
-  deleteUser = (req: Request, res: Response, next: NextFunction) => {
+  softDeleteUser = async (req: Request, res: Response, next: NextFunction) => {
     const { params: { id } } = req;
 
     if (!id) {
@@ -75,37 +168,15 @@ class UserController {
       });
     }
 
-    const deletedUser = this.userModel.softDeleteUser(id);
+    const deletedUser = await this.repository.softDeleteUser(id);
 
     if (!deletedUser) {
       return res.status(404).json({
-        message: `User with ${id} doesn't exist or has been already removed`
+        message: `User with {id: ${id}} doesn't exist or has been already removed`
       });
     }
 
     return res.json({ status: true });
-  };
-
-  getAutoSuggestUsers = (req: Request, res: Response, next: NextFunction) => {
-    const { query } = req;
-    const { loginSubstring, limit } = query;
-    const limitNumber = Number(limit);
-
-    if (!loginSubstring) {
-      return res.status(400).json({
-        message: 'loginSubstring required'
-      });
-    }
-
-    if (limit && (!limitNumber || (limitNumber < 0))) {
-      return res.status(400).json({
-        message: 'limit should be a positive number'
-      });
-    }
-
-    const autoSuggestUserList = this.userModel.getAutoSuggestUsers(loginSubstring as string, limitNumber);
-
-    return res.json({ autoSuggestUserList });
   };
 }
 
