@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import UserRepository from '@src/repositories/user';
 import UserEntity from '@src/entities/User';
-import { PostgresDataSource } from '@src/data-source';
+import { DataSource } from 'typeorm';
 import User from '@entities/User';
 
 const DEFAULT_LIMIT = 10;
@@ -10,8 +10,8 @@ const DEFAULT_OFFSET = 0;
 class UserController {
   private readonly repository: UserRepository;
 
-  constructor() {
-    this.repository = new UserRepository(PostgresDataSource.getRepository(User));
+  constructor(dataSource: DataSource) {
+    this.repository = new UserRepository(dataSource.getRepository(User));
   }
 
   private getPaginatedResponse({

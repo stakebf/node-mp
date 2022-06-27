@@ -2,7 +2,7 @@ import 'dotenv/config';
 import 'express-async-errors';
 import express from 'express';
 import cors from 'cors';
-import userRouter from '@routes/user';
+import getUserRouter from '@routes/user';
 import errorHandler from '@src/errorHandler/errorHandler';
 import { PostgresDataSource } from '@src/data-source';
 import logger from '@src/logger';
@@ -21,7 +21,7 @@ PostgresDataSource.initialize()
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/users', userRouter);
+app.use('/api/users', getUserRouter(PostgresDataSource));
 app.use(errorHandler);
 
 app.listen(process.env.DEFAULT_SERVER_PORT ?? 3050);
