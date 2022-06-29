@@ -11,5 +11,11 @@ export const userSchemaPost = Joi.object({
 export const userSchemaPut = Joi.object({
   login: Joi.string().trim().min(3).max(20),
   password: Joi.string().pattern(new RegExp(passwordValidation)),
+  oldPassword: Joi.string().pattern(new RegExp(passwordValidation)),
   age: Joi.number().min(4).max(130)
+});
+
+export const userSchemaCheckLogin = Joi.object({
+  login: Joi.string().trim().min(3).max(20).required(),
+  password: Joi.string().pattern(new RegExp(passwordValidation)).required()
 });
