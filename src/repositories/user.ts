@@ -10,6 +10,11 @@ class UserRepository {
     this.repository = repository;
   }
 
+  getAllUsers = async (): Promise<IUser[]> => {
+    const allUsers = await this.repository.find();
+    return allUsers;
+  };
+
   createUser = async (user: Omit<IUser, 'id' | 'createdAt'>): Promise<IUser | undefined> => {
     const isUniqueLogin = !!(await this.repository.findOneBy({ login: user.login }));
 
@@ -109,13 +114,16 @@ class UserRepository {
     const deletedUser = await this.getUserByID(id);
 
     if (!deletedUser || deletedUser?.deletedAt) {
-      console.log('!deletedUser || deletedUser?.deletedAt', !deletedUser || deletedUser?.deletedAt);
       return undefined;
     }
 
     await this.repository.softDelete(id);
 
     return deletedUser;
+  };
+
+  deleteAllUsers = async (ids: string[]) => {
+    await this.repository.delete(ids);
   };
 }
 

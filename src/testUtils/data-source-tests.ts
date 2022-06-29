@@ -5,15 +5,11 @@ import UserEntity from '../entities/User';
 
 export const TestPostgresDataSource = new DataSource({
   type: 'postgres',
-  host: process.env?.DB_POSTGRES_HOST ?? 'localhost',
-  port: Number(process.env?.DB_POSTGRES_PORT ?? 5433),
-  username: 'postgres',
-  password: 'postgres',
-  database: 'nodeMPTest',
+  host: 'heffalump.db.elephantsql.com',
+  port: 5432,
+  username: 'gscdabqu',
+  password: 'szn1UERuPx1LOpdV-kdRSLbWV980CyfC',
+  database: 'gscdabqu',
   entities: [UserEntity],
-  dropSchema: true,
-  migrationsRun: true,
-  migrations: ['src/migrations/*.ts'],
-  synchronize: true,
-  logging: false
+  synchronize: true
 });

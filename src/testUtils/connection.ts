@@ -1,8 +1,14 @@
-import { TestPostgresDataSource } from '@src/testUtils/data-source-tests';
+import { DataSource } from 'typeorm';
 
 class TestConnection {
+  connection: DataSource;
+
+  constructor(connection: DataSource) {
+    this.connection = connection;
+  }
+
   create = async (): Promise<void> => {
-    await TestPostgresDataSource.initialize().then(() => {
+    await this.connection.initialize().then(() => {
       console.log('PostgresDataSource is initialized');
     })
       .catch((error) => {
@@ -10,7 +16,7 @@ class TestConnection {
       });
   };
   destroy = async (): Promise<void> => {
-    await TestPostgresDataSource.destroy();
+    await this.connection.destroy();
   };
 }
 
