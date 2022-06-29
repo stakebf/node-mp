@@ -20,9 +20,7 @@ class UserEntity extends BaseEntity {
   })
     login: string;
 
-  @Column({
-    select: false
-  })
+  @Column()
     password: string;
 
   @Column()

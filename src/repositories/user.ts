@@ -11,7 +11,9 @@ class UserRepository {
   }
 
   getAllUsers = async (): Promise<IUser[]> => {
-    const allUsers = await this.repository.find();
+    const allUsers = await this.repository.find({
+      withDeleted: true
+    });
     return allUsers;
   };
 
@@ -113,7 +115,7 @@ class UserRepository {
   softDeleteUser = async (id: string): Promise<IUser | undefined> => {
     const deletedUser = await this.getUserByID(id);
 
-    if (!deletedUser || deletedUser?.deletedAt) {
+    if (!deletedUser || deletedUser.deletedAt) {
       return undefined;
     }
 

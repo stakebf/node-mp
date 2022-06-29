@@ -2,6 +2,7 @@ module.exports = {
   clearMocks: true,
   testEnvironment: 'node',
   preset: 'ts-jest',
+  testTimeout: 100000,
   moduleNameMapper: {
     '@src/(.*)': '<rootDir>/src/$1',
     '@routes/(.*)': '<rootDir>/src/routes/$1',

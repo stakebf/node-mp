@@ -61,7 +61,7 @@ class UserController {
     const user = await this.repository.getUserByID(id);
 
     if (!user) {
-      return res.status(400).json({
+      return res.status(404).json({
         message: `User with ${id} doesn't exist`
       });
     }
@@ -136,7 +136,7 @@ class UserController {
       const isCorrectUserCreds = await this.repository.checkLogin({ id, password: body.oldPassword });
 
       if (isCorrectUserCreds === undefined) {
-        return res.status(400).json({
+        return res.status(404).json({
           message: `User with ${id} doesn't exist`
         });
       }
@@ -152,7 +152,7 @@ class UserController {
 
     if (!updatedUser) {
       return res.status(400).json({
-        message: `User with ${id} doesn't exist or has been already removed`
+        message: `User with ${id} has been already removed`
       });
     }
 
