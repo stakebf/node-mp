@@ -1,3 +1,5 @@
+import Group from '@entities/Group';
+
 export interface IUser {
   id: string;
   login: string;
@@ -6,4 +8,5 @@ export interface IUser {
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
+  groups?: Group[];
 }

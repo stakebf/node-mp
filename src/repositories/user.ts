@@ -1,7 +1,8 @@
-import { Repository, Like } from 'typeorm';
+import { Repository, Like, In } from 'typeorm';
+import bcrypt from 'bcrypt';
 import UserEntity from '@entities/User';
 import { IUser } from '@src/shared/types/user';
-import bcrypt from 'bcrypt';
+import { IGroup } from '@src/shared/types/group';
 
 class UserRepository {
   private readonly repository: Repository<UserEntity>;
@@ -19,26 +20,52 @@ class UserRepository {
 
   createUser = async (user: Omit<IUser, 'id' | 'createdAt'>): Promise<IUser | undefined> => {
     const isUniqueLogin = !!(await this.repository.findOneBy({ login: user.login }));
+    const userEntity = new UserEntity();
 
     if (isUniqueLogin) {
       return undefined;
     }
 
-    const newUser = await this.repository.save(
-      this.repository.create(user) // need for BeforeInsert https://github.com/typeorm/typeorm/issues/5493
+    const newUser = {
+      ...userEntity,
+      ...user
+    };
+
+    const createdUser = await this.repository.save(
+      this.repository.create(newUser) // need for BeforeInsert https://github.com/typeorm/typeorm/issues/5493
     );
 
-    return newUser;
+    return createdUser;
   };
 
-  getUserByID = async (id: string): Promise<IUser | undefined> => {
-    const user = await this.repository.findOneBy({ id });
+  getUserByID = async (id: string): Promise<UserEntity | null> => {
+    const user = await this.repository.findOne({
+      where: {
+        id
+      },
+      relations: ['groups']
+    });
 
     if (!user) {
-      return undefined;
+      return null;
     }
 
     return user;
+  };
+
+  getUserListByIDs = async (userListId: string[]): Promise<UserEntity[] | undefined> => {
+    const users = await this.repository.find({
+      where: {
+        id: In(userListId)
+      },
+      relations: ['groups']
+    });
+
+    if (!users) {
+      return undefined;
+    }
+
+    return users;
   };
 
   getUsersByParams = async ({
@@ -56,6 +83,7 @@ class UserRepository {
       where: {
         login: Like(`%${loginSubstring}%`)
       },
+      relations: ['groups'],
       order: {
         login: (order as 'ASC' | 'DESC')
       },
@@ -88,9 +116,24 @@ class UserRepository {
     return isValid;
   };
 
-  updateUser = async (id: string, newUserInfo: Partial<IUser & { oldPassword?: string }>): Promise<IUser | undefined> => {
-    const user = await this.repository.findOneBy({ id });
+  updateUser = async (id: string, newUserInfo: Partial<IUser & { oldPassword?: string }>, groups: IGroup[] | undefined): Promise<IUser | undefined | null> => {
+    if (newUserInfo?.login) {
+      const isUniqueLogin = !!(await this.repository.findOneBy({ login: newUserInfo.login }));
+
+      if (isUniqueLogin) {
+        return null;
+      }
+    }
+
+    const user = await this.repository.findOne({
+      where: {
+        id
+      },
+      relations: ['groups']
+    });
+
     let newPassword;
+    let updatedUserInfo;
 
     if (!user || user?.deletedAt) {
       return undefined;
@@ -103,9 +146,13 @@ class UserRepository {
 
     delete newUserInfo.oldPassword;
 
-    const updatedUserInfo = newPassword ?
+    updatedUserInfo = newPassword ?
       { ...user, ...newUserInfo, password: newPassword } :
       { ...user, ...newUserInfo };
+
+    if (groups?.length) {
+      updatedUserInfo = { ...updatedUserInfo, groups };
+    }
 
     const updatedUser = await this.repository.save(updatedUserInfo);
 

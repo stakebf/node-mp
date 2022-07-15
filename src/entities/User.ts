@@ -6,11 +6,14 @@ import {
   DeleteDateColumn,
   Entity,
   PrimaryGeneratedColumn,
-  UpdateDateColumn
+  UpdateDateColumn,
+  ManyToMany,
+  JoinTable
 } from 'typeorm';
 import bcrypt from 'bcrypt';
+import Group from '@entities/Group';
 
-@Entity({ name: 'user' })
+@Entity({ name: 'users' })
 class UserEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
     id: string;
@@ -40,6 +43,12 @@ class UserEntity extends BaseEntity {
     const salt = await bcrypt.genSalt();
     this.password = await bcrypt.hash(password ?? this.password, salt);
   }
+
+  @ManyToMany(() => Group)
+  @JoinTable({
+    name: 'users_groups'
+  })
+    groups: Group[];
 }
 
 export default UserEntity;

@@ -1,17 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
-import UserRepository from '@src/repositories/user';
 import UserEntity from '@src/entities/User';
-import { DataSource } from 'typeorm';
-import User from '@entities/User';
+import UserService from '@src/services/user';
 
 const DEFAULT_LIMIT = 10;
 const DEFAULT_OFFSET = 0;
 
 class UserController {
-  private readonly repository: UserRepository;
+  private readonly service: UserService;
 
-  constructor(dataSource: DataSource) {
-    this.repository = new UserRepository(dataSource.getRepository(User));
+  constructor(service: UserService) {
+    this.service = service;
   }
 
   private getPaginatedResponse({
@@ -45,7 +43,7 @@ class UserController {
     const { body } = req;
     const { login: createdUserLogin } = body;
 
-    const createdUser = await this.repository.createUser(body);
+    const createdUser = await this.service.createUser(body);
 
     if (!createdUser) {
       return res.status(400).json({
@@ -58,7 +56,7 @@ class UserController {
 
   getUserByID = async (req: Request, res: Response, next: NextFunction) => {
     const { params: { id } } = req;
-    const user = await this.repository.getUserByID(id);
+    const user = await this.service.getUserByID(id);
 
     if (!user) {
       return res.status(404).json({
@@ -86,7 +84,7 @@ class UserController {
     const limitValue  = Number(limit) ? Number(limit) : DEFAULT_LIMIT;
     const offsetValue  = Number(offset) ? Number(offset) : DEFAULT_OFFSET;
 
-    const { data, count } = await this.repository.getUsersByParams({
+    const { data, count } = await this.service.getUsersByParams({
       loginSubstring,
       limit: limitValue,
       offset: offsetValue,
@@ -105,7 +103,7 @@ class UserController {
     const { body: {
       login, password
     } } = req;
-    const isCorrectUserCreds = await this.repository.checkLogin({ login, password });
+    const isCorrectUserCreds = await this.service.checkLogin({ login, password });
 
     if (isCorrectUserCreds === undefined) {
       return res.status(400).json({
@@ -125,15 +123,14 @@ class UserController {
   };
 
   updateUser = async (req: Request, res: Response, next: NextFunction) => {
-    const { body } = req;
-    const { params: { id } } = req;
+    const { params: { id }, body } = req;
 
     if ((!body?.password && body?.oldPassword) || (body?.password && !body?.oldPassword)) {
       return res.status(400).json({
         message: 'Missing parameters for updating password'
       });
     } else if (body?.password && body?.oldPassword) {
-      const isCorrectUserCreds = await this.repository.checkLogin({ id, password: body.oldPassword });
+      const isCorrectUserCreds = await this.service.checkLogin({ id, password: body.oldPassword });
 
       if (isCorrectUserCreds === undefined) {
         return res.status(404).json({
@@ -148,11 +145,17 @@ class UserController {
       }
     }
 
-    const updatedUser = await this.repository.updateUser(id, body);
+    const updatedUser = await this.service.updateUser(id, body);
 
-    if (!updatedUser) {
+    if (updatedUser === undefined) {
       return res.status(400).json({
         message: `User with ${id} has been already removed`
+      });
+    }
+
+    if (updatedUser === null) {
+      return res.status(400).json({
+        message: `Login ${body?.login} already exists`
       });
     }
 
@@ -168,7 +171,7 @@ class UserController {
       });
     }
 
-    const deletedUser = await this.repository.softDeleteUser(id);
+    const deletedUser = await this.service.softDeleteUser(id);
 
     if (!deletedUser) {
       return res.status(404).json({

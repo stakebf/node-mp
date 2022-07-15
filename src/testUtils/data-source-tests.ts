@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { DataSource } from 'typeorm';
 
 import UserEntity from '../entities/User';
+import GroupEntity from '../entities/Group';
 
 export const TestPostgresDataSource = new DataSource({
   type: 'postgres',
@@ -10,6 +11,6 @@ export const TestPostgresDataSource = new DataSource({
   username: 'gscdabqu',
   password: 'szn1UERuPx1LOpdV-kdRSLbWV980CyfC',
   database: 'gscdabqu',
-  entities: [UserEntity],
+  entities: [UserEntity, GroupEntity],
   synchronize: true
 });

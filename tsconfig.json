@@ -20,6 +20,7 @@
       "@middlewares/*": ["src/middlewares/*"],
       "@entities/*": ["src/entities/*"],
       "@migrations/*": ["src/migrations/*"],
+      "@services/*": ["src/services/*"],
     },
     "esModuleInterop": true,
     "experimentalDecorators": true,

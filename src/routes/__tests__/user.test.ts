@@ -5,14 +5,14 @@ import { TestPostgresDataSource } from '@src/testUtils/data-source-tests';
 
 import getUserRouter from '@routes/user';
 import UserRepository from '@repositories/user';
-import User from '@entities/User';
+import UserEntity from '@entities/User';
 import { IUser } from '@src/shared/types/user';
 
 const app = express();
 app.use(express.json());
 app.use('/api/users', getUserRouter(TestPostgresDataSource));
 
-const repository = new UserRepository(TestPostgresDataSource.getRepository(User));
+const userRepository = new UserRepository(TestPostgresDataSource.getRepository(UserEntity));
 const testConnection = new TestConnection(TestPostgresDataSource);
 
 describe('check users routes', () => {
@@ -23,11 +23,11 @@ describe('check users routes', () => {
   beforeAll(async () => {
     await testConnection.create();
 
-    const userList = await repository.getAllUsers();
+    const userList = await userRepository.getAllUsers();
 
     if (userList.length) {
       const ids = userList.map(({ id }) => id);
-      await repository.deleteAllUsers(ids);
+      await userRepository.deleteAllUsers(ids);
     }
   });
 

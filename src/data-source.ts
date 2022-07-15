@@ -1,7 +1,8 @@
 import 'dotenv/config';
 import { DataSource } from 'typeorm';
 
-import UserEntity from './entities/User';
+import UserEntity from '@entities/User';
+import GroupEntity from '@entities/Group';
 
 export const PostgresDataSource = new DataSource({
   type: 'postgres',
@@ -10,7 +11,7 @@ export const PostgresDataSource = new DataSource({
   username: process.env?.DB_POSTGRES_USERNAME ?? '',
   password: process.env?.DB_POSTGRES_PASSWORD ?? '',
   database: process.env?.DB_POSTGRES_NAME ?? 'nodeMP',
-  entities: [UserEntity],
+  entities: [UserEntity, GroupEntity],
   migrations: ['src/migrations/*.ts'],
   synchronize: true,
   logging: false

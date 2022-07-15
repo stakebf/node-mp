@@ -11,6 +11,7 @@ module.exports = {
     '@shared/(.*)': '<rootDir>/src/shared/$1',
     '@middlewares/(.*)': '<rootDir>/src/middlewares/$1',
     '@entities/(.*)': '<rootDir>/src/entities/$1',
-    '@migrations/(.*)': '<rootDir>/src/migrations/$1'
+    '@migrations/(.*)': '<rootDir>/src/migrations/$1',
+    '@services/(.*)': '<rootDir>/src/services/$1'
   }
 };
