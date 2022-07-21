@@ -30,8 +30,7 @@ class GroupController {
   };
 
   updateGroup = async (req: Request, res: Response, next: NextFunction) => {
-    const { body } = req;
-    const { params: { id } } = req;
+    const { params: { id }, body } = req;
 
     const updatedGroup = await this.service.updateGroup(id, body);
 
@@ -59,12 +58,12 @@ class GroupController {
   };
 
   addUsersToGroup = async (req: Request, res: Response, next: NextFunction) => {
-    const { groupId, userIds } = req.body;
-    const updatedGroup = await this.service.addUsersToGroup(groupId, userIds);
+    const { params: { id }, body: { userIds } } = req;
+    const updatedGroup = await this.service.addUsersToGroup(id, userIds);
 
     if (updatedGroup === undefined) {
       return res.status(404).json({
-        message: `Group with {id: ${groupId}} or userIds ${userIds} don't exist or has been already removed`
+        message: `Group with {id: ${id}} or userIds ${userIds} don't exist or has been already removed`
       });
     }
 

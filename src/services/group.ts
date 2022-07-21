@@ -59,11 +59,7 @@ class GroupService {
     let updatedGroup;
 
     await this.groupDataSource.manager.transaction(async (transactionalEntityManager) => {
-      try {
-        updatedGroup = await transactionalEntityManager.save(group);
-      } catch (e) {
-        return null;
-      }
+      updatedGroup = await transactionalEntityManager.save(group);
     });
 
     return updatedGroup;

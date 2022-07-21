@@ -35,13 +35,10 @@ const getGroupRouter = (dataSource: DataSource) => {
     .post(schemaValidation(createGroupSchema), createGroup);
 
   groupRouter
-    .route('/add-users-to-group')
-    .post(schemaValidation(addUsersToGroupSchema), addUsersToGroup);
-
-  groupRouter
     .route('/:id')
     .get(getGroupByID)
     .put(schemaValidation(updateGroupSchema), updateGroup)
+    .patch(schemaValidation(addUsersToGroupSchema), addUsersToGroup)
     .delete(deleteGroup);
 
   return groupRouter;

@@ -13,6 +13,5 @@ export const updateGroupSchema = Joi.object({
 });
 
 export const addUsersToGroupSchema = Joi.object({
-  groupId: Joi.string().trim().required(),
   userIds: Joi.array().items(Joi.string().trim().required())
 });
