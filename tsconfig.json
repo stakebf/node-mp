@@ -14,16 +14,20 @@
     "paths": {
       "@src/*": ["src/*"],
       "@routes/*": ["src/routes/*"],
-      "@models/*": ["src/models/*"],
+      "@repositories/*": ["src/repositories/*"],
       "@controllers/*": ["src/controllers/*"],
       "@shared/*": ["src/shared/*"],
       "@middlewares/*": ["src/middlewares/*"],
+      "@entities/*": ["src/entities/*"],
+      "@migrations/*": ["src/migrations/*"],
+      "@services/*": ["src/services/*"],
     },
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "strictPropertyInitialization": false
   },
   "exclude": ["node_modules", "dist", "coverage"],
   "include": ["src"]
