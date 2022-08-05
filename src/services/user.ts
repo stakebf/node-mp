@@ -58,7 +58,7 @@ class UserService {
     id
   }: {
     login?: string, password: string, id?: string
-  }): Promise<boolean | undefined> => {
+  }): Promise<{isValid: boolean, user: IUser} | undefined> => {
     const isValidCreds = await this.userRepository.checkLogin({
       login,
       password,

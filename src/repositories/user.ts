@@ -103,7 +103,7 @@ class UserRepository {
     id
   }: {
     login?: string, password: string, id?: string
-  }): Promise<boolean | undefined> => {
+  }): Promise<undefined | {isValid: boolean, user: IUser}> => {
     const findBy = id ? { id } : { login };
     const user = await this.repository.findOneBy({ ...findBy });
 
@@ -113,7 +113,7 @@ class UserRepository {
 
     const isValid = await bcrypt.compare(password, user.password);
 
-    return isValid;
+    return { isValid, user };
   };
 
   updateUser = async (id: string, newUserInfo: Partial<IUser & { oldPassword?: string }>, groups: IGroup[] | undefined): Promise<IUser | undefined | null> => {

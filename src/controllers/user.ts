@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
 import UserEntity from '@src/entities/User';
 import UserService from '@src/services/user';
 import logger from '@src/logger';
@@ -120,9 +121,9 @@ class UserController {
     const { body: {
       login, password
     } } = req;
-    const isCorrectUserCreds = await this.service.checkLogin({ login, password });
+    const userCreds = await this.service.checkLogin({ login, password });
 
-    if (isCorrectUserCreds === undefined) {
+    if (userCreds === undefined) {
       const message = `User with ${login} doesn't exist`;
 
       logger.error({
@@ -136,7 +137,9 @@ class UserController {
       return res.status(400).json({ message });
     }
 
-    if (!isCorrectUserCreds) {
+    const { isValid, user: { login: userLogin, age } } = userCreds;
+
+    if (!isValid) {
       const message = 'Incorrect login or password';
 
       logger.error({
@@ -150,9 +153,12 @@ class UserController {
       return res.status(401).json({ message });
     }
 
-    return res.json({
-      status: 'ok'
-    });
+    const token = jwt.sign({
+      login: userLogin,
+      age
+    }, process.env.ACCESS_TOKEN ?? '', { expiresIn: 3600 });
+
+    return res.json({ token: `Bearer ${token}` });
   };
 
   updateUser = async (req: Request, res: Response, next: NextFunction) => {

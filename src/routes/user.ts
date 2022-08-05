@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { DataSource } from 'typeorm';
 import UserController from '@controllers/user';
 import { schemaValidation } from '@middlewares/schemaValidation';
+import validateToken from '@middlewares/accessTokeValidation';
 import {
   createUserSchema,
   updateUserSchema,
@@ -32,7 +33,10 @@ const getUserRouter = (dataSource: DataSource) => {
 
   userRouter
     .route('/')
-    .get(getUsersByParams)
+    .get(validateToken, getUsersByParams);
+
+  userRouter
+    .route('/registration')
     .post(schemaValidation(createUserSchema), createUser);
 
   userRouter
@@ -41,9 +45,9 @@ const getUserRouter = (dataSource: DataSource) => {
 
   userRouter
     .route('/:id')
-    .get(getUserByID)
-    .put(schemaValidation(updateUserSchema), updateUser)
-    .delete(softDeleteUser);
+    .get(validateToken, getUserByID)
+    .put(schemaValidation(updateUserSchema), validateToken, updateUser)
+    .delete(validateToken, softDeleteUser);
 
   return userRouter;
 };

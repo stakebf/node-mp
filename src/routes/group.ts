@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { DataSource } from 'typeorm';
 import GroupController from '@controllers/group';
 import { schemaValidation } from '@middlewares/schemaValidation';
+import validateToken from '@middlewares/accessTokeValidation';
 import {
   createGroupSchema,
   updateGroupSchema,
@@ -32,14 +33,14 @@ const getGroupRouter = (dataSource: DataSource) => {
 
   groupRouter
     .route('/')
-    .post(schemaValidation(createGroupSchema), createGroup);
+    .post(schemaValidation(createGroupSchema), validateToken, createGroup);
 
   groupRouter
     .route('/:id')
-    .get(getGroupByID)
-    .put(schemaValidation(updateGroupSchema), updateGroup)
-    .patch(schemaValidation(addUsersToGroupSchema), addUsersToGroup)
-    .delete(deleteGroup);
+    .get(validateToken, getGroupByID)
+    .put(schemaValidation(updateGroupSchema), validateToken, updateGroup)
+    .patch(schemaValidation(addUsersToGroupSchema), validateToken, addUsersToGroup)
+    .delete(validateToken, deleteGroup);
 
   return groupRouter;
 };
