@@ -59,13 +59,13 @@ class UserService {
   }: {
     login?: string, password: string, id?: string
   }): Promise<{isValid: boolean, user: IUser} | undefined> => {
-    const isValidCreds = await this.userRepository.checkLogin({
+    const userCreds = await this.userRepository.checkLogin({
       login,
       password,
       id
     });
 
-    return isValidCreds;
+    return userCreds;
   };
 
   updateUser = async (id: string, newUserInfo: Partial<IUser & { oldPassword?: string, groups?: string[] }>): Promise<IUser | undefined | null> => {

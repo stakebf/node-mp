@@ -178,9 +178,9 @@ class UserController {
 
       return res.status(400).json({ message });
     } else if (body?.password && body?.oldPassword) {
-      const isCorrectUserCreds = await this.service.checkLogin({ id, password: body.oldPassword });
+      const userCreds = await this.service.checkLogin({ id, password: body.oldPassword });
 
-      if (isCorrectUserCreds === undefined) {
+      if (userCreds === undefined) {
         const message = `User with ${id} doesn't exist`;
 
         logger.error({
@@ -195,7 +195,7 @@ class UserController {
         return res.status(404).json({ message });
       }
 
-      if (!isCorrectUserCreds) {
+      if (!userCreds.isValid) {
         const message = 'Incorrect password';
 
         logger.error({

@@ -8,7 +8,7 @@ import UserRepository from '@repositories/user';
 import UserEntity from '@entities/User';
 import { IUser } from '@src/shared/types/user';
 
-const token = process.env.ACCESS_TOKEN;
+let token: string;
 
 const app = express();
 app.use(express.json());
@@ -52,9 +52,24 @@ describe('check users routes', () => {
       expect(result.status).toEqual(200);
     });
 
+    it('should login user and return bearer token', async () => {
+      const result = await request(app)
+        .post('/api/users/login')
+        .send({
+          login: 'newUser',
+          password: userPassword
+        });
+
+      token = JSON.parse(result.text).token;
+
+      expect(result.status).toEqual(200);
+      expect(token).not.toBeUndefined();
+    });
+
     it('should return status=400 if user already exist', async () => {
       const result = await request(app)
-        .post('/api/users')
+        .post('/api/users/registration')
+        .set('x-access-token', token)
         .send({
           login: 'newUser',
           password: userPassword,
@@ -66,7 +81,8 @@ describe('check users routes', () => {
 
     it('should return status=400 if not all parameters were passed', async () => {
       const result = await request(app)
-        .post('/api/users')
+        .post('/api/users/registration')
+        .set('x-access-token', token)
         .send({
           login: 'newUser2',
           password: userPassword
@@ -80,7 +96,8 @@ describe('check users routes', () => {
   describe('GET /users/:id', () => {
     it('should return status=200 if user exists', async () => {
       const result = await request(app)
-        .get(`/api/users/${createdUser.id}`);
+        .get(`/api/users/${createdUser.id}`)
+        .set('x-access-token', token);
 
       expect(result.status).toEqual(200);
       expect(JSON.parse(result.text).id).toEqual(createdUser.id);
@@ -90,7 +107,8 @@ describe('check users routes', () => {
       const wrongID = '131c76ae-845c-4f0f-8a91-30630163da41';
 
       const result = await request(app)
-        .get(`/api/users/${wrongID}`);
+        .get(`/api/users/${wrongID}`)
+        .set('x-access-token', token);
 
       expect(result.status).toEqual(404);
       expect(createdUser.id).not.toEqual(wrongID);
@@ -101,7 +119,7 @@ describe('check users routes', () => {
   describe('DELETE /users/:id', () => {
     it('should return status=200 if user was deleted', async () => {
       const createdUserResult = await request(app)
-        .post('/api/users')
+        .post('/api/users/registration')
         .send({
           login: 'newUser2',
           password: userPassword,
@@ -111,7 +129,8 @@ describe('check users routes', () => {
       createdUser2 = JSON.parse(createdUserResult.text);
 
       const result = await request(app)
-        .delete(`/api/users/${createdUser2.id}`);
+        .delete(`/api/users/${createdUser2.id}`)
+        .set('x-access-token', token);
 
       expect(result.status).toEqual(200);
       expect(JSON.parse(result.text).status).toEqual(true);
@@ -121,7 +140,8 @@ describe('check users routes', () => {
       const wrongID = '131c76ae-845c-4f0f-8a91-30630163da41';
 
       const result = await request(app)
-        .delete(`/api/users/${wrongID}`);
+        .delete(`/api/users/${wrongID}`)
+        .set('x-access-token', token);
 
       expect(result.status).toEqual(404);
       expect(JSON.parse(result.text).message).toEqual(`User with {id: ${wrongID}} doesn't exist or has been already removed`);
@@ -136,7 +156,8 @@ describe('check users routes', () => {
         .put(`/api/users/${createdUser.id}`)
         .send({
           login: 'newLogin'
-        });
+        })
+        .set('x-access-token', token);
 
       expect(result.status).toEqual(200);
       expect(JSON.parse(result.text).login).not.toEqual(oldLogin);
@@ -147,7 +168,8 @@ describe('check users routes', () => {
         .put(`/api/users/${createdUser.id}`)
         .send({
           age: '155'
-        });
+        })
+        .set('x-access-token', token);
 
       expect(result.status).toEqual(400);
       expect(JSON.parse(result.text).message).toEqual('You have passed wrong parameters');
@@ -158,7 +180,8 @@ describe('check users routes', () => {
         .put(`/api/users/${createdUser.id}`)
         .send({
           oldPassword: userPassword
-        });
+        })
+        .set('x-access-token', token);
 
       expect(result.status).toEqual(400);
       expect(JSON.parse(result.text).message).toEqual('Missing parameters for updating password');
@@ -167,10 +190,13 @@ describe('check users routes', () => {
     it('should return status=401 if user have passed wrong password', async () => {
       const result = await request(app)
         .put(`/api/users/${createdUser.id}`)
+        .set('x-access-token', token)
         .send({
           oldPassword: `${userPassword}111`,
           password: 'sd1anAnew'
         });
+
+      console.log('result', result);
 
       expect(result.status).toEqual(401);
       expect(JSON.parse(result.text).message).toEqual('Incorrect password');
@@ -183,7 +209,8 @@ describe('check users routes', () => {
         .send({
           oldPassword: userPassword,
           password: 'sd1anAnew'
-        });
+        })
+        .set('x-access-token', token);
 
       expect(result.status).toEqual(404);
       expect(JSON.parse(result.text).message).toEqual(`User with ${wrongID} doesn\'t exist`);
@@ -194,7 +221,8 @@ describe('check users routes', () => {
         .put(`/api/users/${createdUser2.id}`)
         .send({
           login: 'zzz'
-        });
+        })
+        .set('x-access-token', token);
 
       expect(result.status).toEqual(400);
       expect(JSON.parse(result.text).message).toEqual(`User with ${createdUser2.id} has been already removed`);
@@ -206,7 +234,8 @@ describe('check users routes', () => {
         .send({
           oldPassword: userPassword,
           password: 'sd1anAnew'
-        });
+        })
+        .set('x-access-token', token);
 
       expect(result.status).toEqual(200);
     });
