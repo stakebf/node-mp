@@ -196,8 +196,6 @@ describe('check users routes', () => {
           password: 'sd1anAnew'
         });
 
-      console.log('result', result);
-
       expect(result.status).toEqual(401);
       expect(JSON.parse(result.text).message).toEqual('Incorrect password');
     });
