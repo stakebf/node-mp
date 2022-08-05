@@ -4,8 +4,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      env:
-        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
       - uses: actions/checkout@v2
       - name: Install modules
         run: yarn install --frozen-lockfile
