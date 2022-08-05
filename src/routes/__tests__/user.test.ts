@@ -8,6 +8,8 @@ import UserRepository from '@repositories/user';
 import UserEntity from '@entities/User';
 import { IUser } from '@src/shared/types/user';
 
+const token = process.env.ACCESS_TOKEN;
+
 const app = express();
 app.use(express.json());
 app.use('/api/users', getUserRouter(TestPostgresDataSource));
@@ -35,10 +37,10 @@ describe('check users routes', () => {
     await testConnection.destroy();
   });
 
-  describe('POST /users', () => {
+  describe('POST /users/registration', () => {
     it('should return status=200 if user was created', async () => {
       const result = await request(app)
-        .post('/api/users')
+        .post('/api/users/registration')
         .send({
           login: 'newUser',
           password: userPassword,
