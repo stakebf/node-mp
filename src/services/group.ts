@@ -64,6 +64,24 @@ class GroupService {
 
     return updatedGroup;
   };
+
+  removeUsersFromGroup = async (groupId: string, userIds: string[]): Promise<IGroup | undefined | null> => {
+    const group = await this.getGroupByID(groupId);
+
+    if (!group) {
+      return undefined;
+    }
+
+    group.users = group.users?.filter(({ id }) => !userIds.includes(id)) ?? [];
+
+    let updatedGroup;
+
+    await this.groupDataSource.manager.transaction(async (transactionalEntityManager) => {
+      updatedGroup = await transactionalEntityManager.save(group);
+    });
+
+    return updatedGroup;
+  };
 }
 
 export default GroupService;

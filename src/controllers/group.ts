@@ -24,14 +24,6 @@ class GroupController {
     if (!group) {
       const message = `Group with ${id} doesn't exist`;
 
-      logger.error({
-        method: 'getGroupByID',
-        args: {
-          id
-        },
-        message
-      });
-
       return res.status(404).json({ message });
     }
 
@@ -102,7 +94,42 @@ class GroupController {
       return res.status(404).json({ message });
     }
 
-    return res.json(updatedGroup);
+    return res.json(updatedGroup?.users);
+  };
+
+  removeUsersFromGroup = async (req: Request, res: Response, next: NextFunction) => {
+    const { params: { id }, body: { userIds } } = req;
+    const updatedGroup = await this.service.removeUsersFromGroup(id, userIds);
+
+    if (updatedGroup === undefined) {
+      const message = `Group with {id: ${id}} or userIds ${userIds} don't exist or has been already removed`;
+
+      logger.error({
+        method: 'removeUsersFromGroup',
+        args: {
+          id,
+          userIds
+        },
+        message
+      });
+
+      return res.status(404).json({ message });
+    }
+
+    return res.json(updatedGroup?.users);
+  };
+
+  getUsersFromGroup = async (req: Request, res: Response, next: NextFunction) => {
+    const { params: { id } } = req;
+    const group = await this.service.getGroupByID(id);
+
+    if (!group) {
+      const message = `Group with ${id} doesn't exist`;
+
+      return res.status(404).json({ message });
+    }
+
+    return res.json(group.users);
   };
 }
 

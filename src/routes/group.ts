@@ -2,12 +2,11 @@ import { Router } from 'express';
 import { DataSource } from 'typeorm';
 import GroupController from '@controllers/group';
 import { schemaValidation } from '@middlewares/schemaValidation';
-import validateToken from '@middlewares/accessTokeValidation';
 import {
   createGroupSchema,
-  updateGroupSchema,
-  addUsersToGroupSchema
+  updateGroupSchema
 } from '@shared/schemes/group';
+import { usersIdsSchema } from '@shared/schemes/user';
 import UserEntity from '@entities/User';
 import GroupEntity from '@entities/Group';
 import UserRepository from '@repositories/user';
@@ -28,19 +27,26 @@ const getGroupRouter = (dataSource: DataSource) => {
     getGroupByID,
     deleteGroup,
     updateGroup,
-    addUsersToGroup
+    addUsersToGroup,
+    getUsersFromGroup,
+    removeUsersFromGroup
   } = new GroupController(groupService);
 
   groupRouter
     .route('/')
-    .post(schemaValidation(createGroupSchema), validateToken, createGroup);
+    .post(schemaValidation(createGroupSchema), createGroup);
 
   groupRouter
     .route('/:id')
-    .get(validateToken, getGroupByID)
-    .put(schemaValidation(updateGroupSchema), validateToken, updateGroup)
-    .patch(schemaValidation(addUsersToGroupSchema), validateToken, addUsersToGroup)
-    .delete(validateToken, deleteGroup);
+    .get(getGroupByID)
+    .patch(schemaValidation(updateGroupSchema), updateGroup)
+    .delete(deleteGroup);
+
+  groupRouter
+    .route('/:id/users')
+    .get(getUsersFromGroup)
+    .put(schemaValidation(usersIdsSchema), addUsersToGroup)
+    .delete(schemaValidation(usersIdsSchema), removeUsersFromGroup);
 
   return groupRouter;
 };

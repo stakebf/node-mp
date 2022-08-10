@@ -21,3 +21,8 @@ export const checkLoginUserSchema = Joi.object({
   login: Joi.string().trim().min(3).max(20).required(),
   password: Joi.string().pattern(new RegExp(passwordValidation)).required()
 });
+
+export const usersIdsSchema = Joi.object({
+  userIds: Joi.array().items(Joi.string().trim().required())
+});
+

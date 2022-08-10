@@ -2,8 +2,9 @@ import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
 const validateToken = (req: Request, res: Response, next: NextFunction) => {
-  const { headers } = req;
-  const token = headers['x-access-token'];
+  const { headers: {
+    authorization: token
+  } } = req;
 
   if (typeof token === 'string') {
     return jwt.verify(token.split(' ')[1], process.env.ACCESS_TOKEN ?? '', (err) => {

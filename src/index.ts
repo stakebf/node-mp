@@ -3,8 +3,10 @@ import 'express-async-errors';
 import express, { Request } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
+import getLoginRouter from '@routes/login';
 import getUserRouter from '@routes/user';
 import getGroupRouter from '@routes/group';
+import validateToken from '@middlewares/accessTokeValidation';
 import errorHandler from '@src/errorHandler/errorHandler';
 import { PostgresDataSource } from '@src/data-source';
 import logger from '@src/logger';
@@ -37,8 +39,9 @@ process.on('uncaughtException', (error) => {
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/users', getUserRouter(PostgresDataSource));
-app.use('/api/groups', getGroupRouter(PostgresDataSource));
+app.use('/api/login', getLoginRouter(PostgresDataSource));
+app.use('/api/users', validateToken, getUserRouter(PostgresDataSource));
+app.use('/api/groups', validateToken, getGroupRouter(PostgresDataSource));
 app.use(errorHandler);
 
 app.listen(process.env.DEFAULT_SERVER_PORT ?? 3050);

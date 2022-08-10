@@ -1,18 +1,15 @@
 import { Router } from 'express';
 import { DataSource } from 'typeorm';
-import UserController from '@controllers/user';
+import LoginController from '@controllers/login';
 import { schemaValidation } from '@middlewares/schemaValidation';
-import {
-  createUserSchema,
-  updateUserSchema
-} from '@shared/schemes/user';
+import { checkLoginUserSchema } from '@shared/schemes/user';
 import UserEntity from '@entities/User';
 import GroupEntity from '@entities/Group';
 import UserRepository from '@repositories/user';
 import GroupRepository from '@repositories/group';
 import UserService from '@services/user';
 
-const getUserRouter = (dataSource: DataSource) => {
+const getLoginRouter = (dataSource: DataSource) => {
   const userRouter = Router();
   const userRepository = new UserRepository(dataSource.getRepository(UserEntity));
   const groupRepository = new GroupRepository(dataSource.getRepository(GroupEntity));
@@ -20,26 +17,13 @@ const getUserRouter = (dataSource: DataSource) => {
     userRepository,
     groupRepository
   );
-  const {
-    createUser,
-    getUserByID,
-    softDeleteUser,
-    updateUser,
-    getUsersByParams
-  } = new UserController(userService);
+  const { checkLogin } = new LoginController(userService);
 
   userRouter
     .route('/')
-    .get(getUsersByParams)
-    .post(schemaValidation(createUserSchema), createUser);
-
-  userRouter
-    .route('/:id')
-    .get(getUserByID)
-    .patch(schemaValidation(updateUserSchema), updateUser)
-    .delete(softDeleteUser);
+    .post(schemaValidation(checkLoginUserSchema), checkLogin);
 
   return userRouter;
 };
 
-export default getUserRouter;
+export default getLoginRouter;

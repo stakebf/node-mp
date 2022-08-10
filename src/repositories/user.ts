@@ -18,7 +18,7 @@ class UserRepository {
     return allUsers;
   };
 
-  createUser = async (user: Omit<IUser, 'id' | 'createdAt'>): Promise<IUser | undefined> => {
+  createUser = async (user: Omit<IUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<IUser | undefined> => {
     const isUniqueLogin = !!(await this.repository.findOneBy({ login: user.login }));
     const userEntity = new UserEntity();
 

@@ -71,14 +71,6 @@ class UserController {
     if (!user) {
       const message = `User with ${id} doesn't exist`;
 
-      logger.error({
-        method: 'getUserByID',
-        args: {
-          id
-        },
-        message
-      });
-
       return res.status(404).json({ message });
     }
 
@@ -126,14 +118,6 @@ class UserController {
     if (userCreds === undefined) {
       const message = `User with ${login} doesn't exist`;
 
-      logger.error({
-        method: 'checkLogin',
-        args: {
-          login, password
-        },
-        message
-      });
-
       return res.status(400).json({ message });
     }
 
@@ -142,23 +126,15 @@ class UserController {
     if (!isValid) {
       const message = 'Incorrect login or password';
 
-      logger.error({
-        method: 'checkLogin',
-        args: {
-          login, password
-        },
-        message
-      });
-
       return res.status(401).json({ message });
     }
 
     const token = jwt.sign({
       login: userLogin,
       age
-    }, process.env.ACCESS_TOKEN ?? '', { expiresIn: 3600 });
+    }, process.env.ACCESS_TOKEN ?? '', { expiresIn: 3600 }); // ! need to figure out for what and how to use this param
 
-    return res.json({ token: `Bearer ${token}` });
+    return res.json({ token });
   };
 
   updateUser = async (req: Request, res: Response, next: NextFunction) => {
