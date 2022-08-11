@@ -77,6 +77,19 @@ class UserController {
     return res.json(user);
   };
 
+  getUserGroups = async (req: Request, res: Response, next: NextFunction) => {
+    const { params: { id } } = req;
+    const user = await this.service.getUserByID(id);
+
+    if (!user) {
+      const message = `User with ${id} doesn't exist`;
+
+      return res.status(404).json({ message });
+    }
+
+    return res.json(user.groups);
+  };
+
   getUsersByParams = async (req: Request, res: Response, next: NextFunction) => {
     const { query: {
       loginSubstring = '',

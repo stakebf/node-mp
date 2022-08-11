@@ -25,7 +25,8 @@ const getUserRouter = (dataSource: DataSource) => {
     getUserByID,
     softDeleteUser,
     updateUser,
-    getUsersByParams
+    getUsersByParams,
+    getUserGroups
   } = new UserController(userService);
 
   userRouter
@@ -38,6 +39,10 @@ const getUserRouter = (dataSource: DataSource) => {
     .get(getUserByID)
     .patch(schemaValidation(updateUserSchema), updateUser)
     .delete(softDeleteUser);
+
+  userRouter
+    .route('/:id/groups')
+    .get(getUserGroups);
 
   return userRouter;
 };
