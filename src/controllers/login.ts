@@ -49,7 +49,7 @@ class LoginController {
     const token = jwt.sign({
       login: userLogin,
       age
-    }, process.env.ACCESS_TOKEN ?? '', { expiresIn: 3600 }); // ! need to figure out for what and how to use this param
+    }, process.env.ACCESS_TOKEN ?? '');
 
     return res.json({ token });
   };
