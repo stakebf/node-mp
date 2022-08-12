@@ -14,6 +14,21 @@ class GroupController {
 
     const createdGroup = await this.service.createGroup(body);
 
+    if (!createdGroup) {
+      const message = 'Group wasn\'t created';
+
+      logger.error({
+        method: 'createGroup',
+        args: {
+          body
+        },
+        message
+      });
+
+      return res.status(400).json({ message });
+    }
+
+
     return res.json(createdGroup);
   };
 
@@ -36,7 +51,7 @@ class GroupController {
     const updatedGroup = await this.service.updateGroup(id, body);
 
     if (!updatedGroup) {
-      const message = `Group with ${id} has been already removed`;
+      const message = `Group with ${id} has been already removed or doesn't exist`;
 
       logger.error({
         method: 'updateGroup',
