@@ -1,111 +1,245 @@
 import { Request, Response, NextFunction } from 'express';
-import UserModel from '@models/user';
-import { IUserModel } from '@src/shared/types/user';
+import UserEntity from '@src/entities/User';
+import UserService from '@src/services/user';
+import logger from '@src/logger';
+
+const DEFAULT_LIMIT = 10;
+const DEFAULT_OFFSET = 0;
 
 class UserController {
-  userModel: IUserModel;
+  private readonly service: UserService;
 
-  constructor() {
-    this.userModel = new UserModel();
+  constructor(service: UserService) {
+    this.service = service;
   }
 
-  getAvailableUserList = (req: Request, res: Response, next: NextFunction) => {
-    const allUsers = this.userModel.getAvailableUserList();
+  private getPaginatedResponse({
+    data,
+    count,
+    limit,
+    offset
+  }: {
+    data: UserEntity[],
+    count: number,
+    limit: number,
+    offset: number
+  }) {
+    const currentPage = offset + 1;
+    const lastPage = Math.ceil(count / limit);
+    const nextPage = currentPage + 1 > lastPage ? null : currentPage + 1;
+    const prevPage = currentPage - 1 < 1 ? null : currentPage - 1;
 
-    return res.json(allUsers);
-  };
+    return {
+      statusCode: 'success',
+      data,
+      count,
+      currentPage,
+      nextPage,
+      prevPage,
+      lastPage
+    };
+  }
 
-  createUser = (req: Request, res: Response, next: NextFunction) => {
+  createUser = async (req: Request, res: Response, next: NextFunction) => {
     const { body } = req;
     const { login: createdUserLogin } = body;
-    const createdUser = this.userModel.createUser(body);
+
+    const createdUser = await this.service.createUser(body);
 
     if (!createdUser) {
-      return res.status(400).json({
-        message: `Login ${createdUserLogin} already exists`
+      const message = `Login ${createdUserLogin} already exists`;
+
+      logger.error({
+        method: 'createUser',
+        args: {
+          body
+        },
+        message
       });
+
+      return res.status(400).json({ message });
     }
 
     return res.json(createdUser);
   };
 
-  getUserByID = (req: Request, res: Response, next: NextFunction) => {
-    const { params: { id }, query: { loginSubstring, limit } } = req;
-
-    if (loginSubstring || limit) return next();
-
-    if (!id) {
-      return res.status(400).json({
-        message: 'ID required'
-      });
-    }
-
-    const user = this.userModel.getUserByID(id);
+  getUserByID = async (req: Request, res: Response, next: NextFunction) => {
+    const { params: { id } } = req;
+    const user = await this.service.getUserByID(id);
 
     if (!user) {
-      return res.status(400).json({
-        message: `User with ${id} doesn't exist`
-      });
+      const message = `User with ${id} doesn't exist`;
+
+      return res.status(404).json({ message });
     }
 
     return res.json(user);
   };
 
-  updateUser = (req: Request, res: Response, next: NextFunction) => {
-    const { body } = req;
+  getUserGroups = async (req: Request, res: Response, next: NextFunction) => {
     const { params: { id } } = req;
+    const user = await this.service.getUserByID(id);
 
-    const updatedUser = this.userModel.updateUser(id, body);
+    if (!user) {
+      const message = `User with ${id} doesn't exist`;
 
-    if (!updatedUser) {
-      return res.status(400).json({
-        message: `Can\'t find user with ${id} id`
+      return res.status(404).json({ message });
+    }
+
+    return res.json(user.groups);
+  };
+
+  getUsersByParams = async (req: Request, res: Response, next: NextFunction) => {
+    const { query: {
+      loginSubstring = '',
+      offset,
+      limit,
+      order = 'ASC'
+    } }: {
+      query: {
+        loginSubstring?: string,
+        offset?: string,
+        limit?: string,
+        order?: string
+      }
+    } = req;
+    const limitValue  = Number(limit) ? Number(limit) : DEFAULT_LIMIT;
+    const offsetValue  = Number(offset) ? Number(offset) : DEFAULT_OFFSET;
+
+    const { data, count } = await this.service.getUsersByParams({
+      loginSubstring,
+      limit: limitValue,
+      offset: offsetValue,
+      order
+    });
+
+    return res.json(this.getPaginatedResponse({
+      data,
+      count,
+      limit: limitValue,
+      offset: offsetValue
+    }));
+  };
+
+  updateUser = async (req: Request, res: Response, next: NextFunction) => {
+    const { params: { id }, body } = req;
+
+    if ((!body?.password && body?.oldPassword) || (body?.password && !body?.oldPassword)) {
+      const message = 'Missing parameters for updating password';
+
+      logger.error({
+        method: 'updateUser',
+        args: {
+          id,
+          body
+        },
+        message
       });
+
+      return res.status(400).json({ message });
+    } else if (body?.password && body?.oldPassword) {
+      const userCreds = await this.service.checkLogin({ id, password: body.oldPassword });
+
+      if (userCreds === undefined) {
+        const message = `User with ${id} doesn't exist`;
+
+        logger.error({
+          method: 'updateUser',
+          args: {
+            id,
+            body
+          },
+          message
+        });
+
+        return res.status(404).json({ message });
+      }
+
+      if (!userCreds.isValid) {
+        const message = 'Incorrect password';
+
+        logger.error({
+          method: 'updateUser',
+          args: {
+            id,
+            body
+          },
+          message
+        });
+
+        return res.status(401).json({ message });
+      }
+    }
+
+    const updatedUser = await this.service.updateUser(id, body);
+
+    if (updatedUser === undefined) {
+      const message = `User with ${id} has been already removed`;
+
+      logger.error({
+        method: 'updateUser',
+        args: {
+          id,
+          body
+        },
+        message
+      });
+
+      return res.status(400).json({ message });
+    }
+
+    if (updatedUser === null) {
+      const message = `Login ${body?.login} already exists`;
+
+      logger.error({
+        method: 'updateUser',
+        args: {
+          id,
+          body
+        },
+        message
+      });
+
+      return res.status(400).json({ message });
     }
 
     return res.json(updatedUser);
   };
 
-  deleteUser = (req: Request, res: Response, next: NextFunction) => {
+  softDeleteUser = async (req: Request, res: Response, next: NextFunction) => {
     const { params: { id } } = req;
 
     if (!id) {
-      return res.status(400).json({
-        message: 'ID required'
+      const message = 'ID required';
+
+      logger.error({
+        method: 'softDeleteUser',
+        args: {
+          id
+        },
+        message
       });
+
+      return res.status(400).json({ message });
     }
 
-    const deletedUser = this.userModel.softDeleteUser(id);
+    const deletedUser = await this.service.softDeleteUser(id);
 
     if (!deletedUser) {
-      return res.status(404).json({
-        message: `User with ${id} doesn't exist or has been already removed`
+      const message = `User with {id: ${id}} doesn't exist or has been already removed`;
+
+      logger.error({
+        method: 'softDeleteUser',
+        args: {
+          id
+        },
+        message
       });
+
+      return res.status(404).json({ message });
     }
 
     return res.json({ status: true });
-  };
-
-  getAutoSuggestUsers = (req: Request, res: Response, next: NextFunction) => {
-    const { query } = req;
-    const { loginSubstring, limit } = query;
-    const limitNumber = Number(limit);
-
-    if (!loginSubstring) {
-      return res.status(400).json({
-        message: 'loginSubstring required'
-      });
-    }
-
-    if (limit && (!limitNumber || (limitNumber < 0))) {
-      return res.status(400).json({
-        message: 'limit should be a positive number'
-      });
-    }
-
-    const autoSuggestUserList = this.userModel.getAutoSuggestUsers(loginSubstring as string, limitNumber);
-
-    return res.json({ autoSuggestUserList });
   };
 }
 
