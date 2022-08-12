@@ -37,9 +37,6 @@ describe('check users routes', () => {
     const userList = await userRepository.getAllUsers();
     const groupList = await groupRepository.getAllGroups();
 
-    console.log('userList', userList);
-    console.log('groupList', groupList);
-
     if (userList.length) {
       const userIds = userList.map(({ id }) => id);
       await userRepository.deleteAllUsers(userIds);
